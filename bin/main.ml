@@ -16,11 +16,8 @@ let print_interpolation_result points interpolation_types step =
       | `Linear -> "Линейная"
       | `Lagrange -> "Лагранж"
     in
-    (* Print the header *)
     print_endline header;
-    (* Print x values *)
     print_endline (String.concat "\t" x_values);
-    (* Print y values *)
     print_endline (String.concat "\t" y_values);
   ) interpolation_types
 
