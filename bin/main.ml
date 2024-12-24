@@ -4,15 +4,17 @@ open Io
 let print_interpolation_result points interpolation_type step =
   let result =
     match interpolation_type with
-    | `Linear -> linear_interpolation points ~step
-    | `Lagrange -> lagrange_interpolation points ~step
+    | `Linear -> linear_interpolation points step
+    | `Lagrange -> lagrange_interpolation points step
   in
-  let x_values = List.map (fun (x, _) -> Printf.sprintf "%.2f" x) result in
-  let y_values = List.map (fun (_, y) -> Printf.sprintf "%.2f" y) result in
+  let result_list = List.of_seq result in  
+  let x_values = List.map (fun (x, _) -> Printf.sprintf "%.2f" x) result_list in
+  let y_values = List.map (fun (_, y) -> Printf.sprintf "%.2f" y) result_list in
   print_endline (String.concat "\t" x_values);
   print_endline (String.concat "\t" y_values)
 
-let rec main_loop points interpolation_type step =
+
+let rec run_interpolation points interpolation_type step =
   print_interpolation_result points interpolation_type step;
   let new_point = read_point () in
   let updated_points = points @ [new_point] in
@@ -20,7 +22,7 @@ let rec main_loop points interpolation_type step =
   let updated_points =
     if List.length updated_points > required_points then List.tl updated_points else updated_points
   in
-  main_loop updated_points interpolation_type step
+  run_interpolation updated_points interpolation_type step
   
 let () =
   let interpolation_type, step =
@@ -35,11 +37,10 @@ let () =
     parse_args (Array.to_list Sys.argv |> List.tl) 1.0
   in
   let required_points = if interpolation_type = `Linear then 2 else 3 in
-  Printf.printf "Введите начальные точки (минимум %d):\n" required_points;
+  (* Printf.printf "Введите начальные точки (минимум %d):\n" required_points; *)
   let rec read_initial_points n acc =
     if n = 0 then List.rev acc
     else read_initial_points (n - 1) (read_point () :: acc)
   in
   let initial_points = read_initial_points required_points [] in
-  main_loop initial_points interpolation_type step
-
+  run_interpolation initial_points interpolation_type step

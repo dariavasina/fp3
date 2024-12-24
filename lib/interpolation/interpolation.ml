@@ -1,38 +1,28 @@
-let linear_interpolation points ~step =
-  let sorted_points = List.sort (fun (x1, _) (x2, _) -> Float.compare x1 x2) points in
-  let rec generate_x_sequence x_min x_max step acc =
-    if x_min > x_max then List.rev acc
-    else generate_x_sequence (x_min +. step) x_max step (x_min :: acc)
+let generate_points x_min x_max step =
+  let rec aux current =
+    if current > x_max then Seq.Nil
+    else Seq.Cons (current, fun () -> aux (current +. step))
   in
+  fun () -> aux x_min
+
+let linear_interpolation points step =
   let interpolate_y x points =
-    let rec find_interval points =
-      match points with
-      | (x1, y1) :: (x2, y2) :: _ when x1 <= x && x <= x2 ->
-          Some (x1, y1, x2, y2)
+    let rec find_interval = function
+      | (x1, y1) :: (x2, y2) :: _ when x1 <= x && x <= x2 -> Some (x1, y1, x2, y2)
       | _ :: rest -> find_interval rest
       | [] -> None
     in
     match find_interval points with
     | Some (x1, y1, x2, y2) ->
         y1 +. (y2 -. y1) *. (x -. x1) /. (x2 -. x1)
-    | None ->
-        let (x1, y1), (x2, y2) =
-          if x < fst (List.hd points) then (List.hd points, List.hd (List.tl sorted_points))
-          else (List.hd (List.rev (List.tl (List.rev points)))), List.hd (List.rev points)
-        in
-        y1 +. (y2 -. y1) *. (x -. x1) /. (x2 -. x1)
+    | None -> failwith "Не удалось интерполировать точку"
   in
-  let x_min, _ = List.hd sorted_points in
-  let x_max, _ = List.hd (List.rev sorted_points) in
-  let x_sequence = generate_x_sequence x_min (x_max +. step) step [] in
-  List.map (fun x -> (x, interpolate_y x sorted_points)) x_sequence
+  let x_min, _ = List.hd points in
+  let x_max, _ = List.hd (List.rev points) in
+  generate_points x_min x_max step
+  |> Seq.map (fun x -> (x, interpolate_y x points))
 
-
-let lagrange_interpolation points ~step =
-  let rec generate_x_sequence x_min x_max step acc =
-    if x_min > x_max then List.rev acc
-    else generate_x_sequence (x_min +. step) x_max step (x_min :: acc)
-  in
+let lagrange_interpolation points step =
   let lagrange_polynomial x points =
     List.fold_left
       (fun acc (xi, yi) ->
@@ -48,6 +38,5 @@ let lagrange_interpolation points ~step =
   in
   let x_min, _ = List.hd points in
   let x_max, _ = List.hd (List.rev points) in
-  let x_sequence = generate_x_sequence x_min (x_max +. step) step [] in
-  List.map (fun x -> (x, lagrange_polynomial x points)) x_sequence
-  
+  generate_points x_min x_max step
+  |> Seq.map (fun x -> (x, lagrange_polynomial x points))
