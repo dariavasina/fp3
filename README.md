@@ -28,6 +28,7 @@
 
 $ dune exec ./bin/main.exe -- -m linear -s 0.5
 
+```
 0 0.00
 1.571 1
 
@@ -38,6 +39,7 @@ $ dune exec ./bin/main.exe -- -m linear -s 0.5
 
 1.57    2.57    3.57
 1.00    0.36    -0.27
+```
 
 4.712 -1
 
