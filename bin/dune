@@ -1,4 +1,4 @@
 (executable
  (name main)
  (modules main)
- (libraries interpolation io))
+ (libraries FP3))
