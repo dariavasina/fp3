@@ -1,5 +1,6 @@
 open Interpolation
 open Io
+open Utils
 
 type runner = {
   step : float;
@@ -13,15 +14,6 @@ let generate_x_values x_min x_max step =
     else Seq.Cons (current, fun () -> aux (current +. step))
   in
   fun () -> aux x_min
-
-let take n lst =
-  let rec aux n lst acc =
-    match lst, n with
-    | _, 0 -> List.rev acc
-    | [], _ -> List.rev acc
-    | x :: xs, _ -> aux (n - 1) xs (x :: acc)
-  in
-  aux n lst []
 
 let perform_interpolation points interpolation_types step =
   List.iter (fun interpolation ->
