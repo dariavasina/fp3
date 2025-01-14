@@ -9,10 +9,11 @@ type runner = {
 
 let generate_x_values x_min x_max step =
   let rec aux current =
-    if current > x_max then Seq.Nil
+    if current >= x_max then Seq.Cons (current, fun () -> Seq.Nil)
     else Seq.Cons (current, fun () -> aux (current +. step))
   in
   fun () -> aux x_min
+
 
 let perform_interpolation points interpolation_types step =
   List.iter (fun interpolation ->
@@ -27,6 +28,7 @@ let perform_interpolation points interpolation_types step =
     print_endline (String.concat "\t" x_values);
     print_endline (String.concat "\t" y_values);
   ) interpolation_types
+  
 
 let rec update_runner runner =
   let points = List.of_seq runner.points_stream in
