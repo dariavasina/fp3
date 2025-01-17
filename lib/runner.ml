@@ -22,8 +22,8 @@ let perform_interpolation points interpolation_types step =
   List.iter (fun interpolation ->
     let relevant_points = take interpolation.window_size points in
     if List.length relevant_points >= interpolation.window_size then
-      let end_point = List.hd relevant_points in
-      let start_point = 
+      let start_point = List.hd relevant_points in
+      let end_point = 
         if List.length relevant_points >= 2 then
           List.nth relevant_points 1
         else
@@ -38,26 +38,6 @@ let perform_interpolation points interpolation_types step =
       print_points result
   ) interpolation_types
 
-(* let perform_interpolation points interpolation_types step =
-  List.iter (fun interpolation ->
-    let relevant_points = take interpolation.window_size points in
-    if List.length relevant_points >= interpolation.window_size then
-      let points_rev = List.rev relevant_points in
-      let end_point = List.hd points_rev in
-      let start_point = 
-        if List.length points_rev >= 2 then
-          List.nth points_rev 1
-        else
-          List.hd points_rev
-      in
-      let result =
-        generate_x_values (fst start_point) (fst end_point) step
-        |> Seq.map (fun x -> (x, interpolation.interpolate relevant_points x))
-        |> List.of_seq
-      in
-      print_endline interpolation.name;
-      print_points result
-  ) interpolation_types *)
 
 let rec update_runner runner =
   let points = List.of_seq runner.points_stream in
