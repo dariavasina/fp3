@@ -3,7 +3,12 @@ open Interpolation
 let parse_arguments args =
   let rec aux args current_step interpolation_types =
     match args with
-    | [] -> { Runner.step = current_step; points_stream = Seq.empty; interpolation_types }
+    | [] -> { 
+        Runner.step = current_step; 
+        points_stream = Seq.empty; 
+        interpolation_types;
+        last_interpolated_x = None;
+      }
     | "-m" :: "linear" :: rest -> aux rest current_step (linear_interpolation :: interpolation_types)
     | "-m" :: "lagrange" :: rest -> aux rest current_step (lagrange_interpolation :: interpolation_types)
     | "-s" :: step_value :: rest -> aux rest (float_of_string step_value) interpolation_types
