@@ -7,7 +7,7 @@ let parse_arguments args =
         Runner.step = current_step; 
         points_stream = Seq.empty; 
         interpolation_types;
-        last_interpolated_x = None;
+        last_interpolated_x = List.map (fun i -> (i.name, None)) interpolation_types;
       }
     | "-m" :: "linear" :: rest -> aux rest current_step (linear_interpolation :: interpolation_types)
     | "-m" :: "lagrange" :: rest -> aux rest current_step (lagrange_interpolation :: interpolation_types)

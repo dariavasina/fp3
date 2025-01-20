@@ -6,7 +6,7 @@ type runner = {
   step : float;
   points_stream : (float * float) Seq.t;
   interpolation_types : interpolation list;
-  last_interpolated_x : float option;
+  last_interpolated_x : (string * float option) list;
 }
 
 let generate_x_values start_x end_x step =
@@ -19,15 +19,27 @@ let generate_x_values start_x end_x step =
   in
   fun () -> aux start_x
 
-let perform_interpolation points interpolation_types step last_x =
-  let interpolate_one interpolation =
-    let relevant_points = take interpolation.window_size points in
-    if List.length relevant_points >= 2 then
+let perform_interpolation points interpolation_types step (last_interpolated : (string * float option) list) : (string * float option) list =
+  (* Сортируем методы по window_size, чтобы линейная интерполяция шла первой *)
+  let sorted_types = List.sort (fun a b -> compare a.window_size b.window_size) interpolation_types in
+  
+  List.map (fun interpolation ->
+    let relevant_points = 
+      if interpolation.window_size = 2 then
+        (* Для линейной интерполяции берем последние 2 точки *)
+        List.rev points |> take 2 |> List.rev
+      else
+        (* Для Лагранжа берем window_size точек *)
+        take interpolation.window_size points
+    in
+    if List.length relevant_points >= interpolation.window_size then
       let end_point = List.hd (List.rev relevant_points) in
+      let last_x = List.assoc_opt interpolation.name last_interpolated in
       let start_x = 
         match last_x with
         | None -> fst (List.hd relevant_points)
-        | Some x -> x +. step
+        | Some (Some x) -> x +. step
+        | Some None -> fst (List.hd relevant_points)
       in
       if start_x < fst end_point then
         let result =
@@ -37,22 +49,21 @@ let perform_interpolation points interpolation_types step last_x =
         in
         print_endline interpolation.name;
         print_points result;
-        Some (fst (List.hd (List.rev result)))
+        (interpolation.name, Some (fst (List.hd (List.rev result))))
       else
-        Some start_x
+        (interpolation.name, match last_x with Some x -> x | None -> None)
     else
-      last_x
-  in
-  List.fold_left (fun _ interp -> interpolate_one interp) last_x interpolation_types
+      (interpolation.name, None)
+  ) sorted_types  (* Используем отсортированный список *)
 
 let rec update_runner runner =
   let points = List.of_seq runner.points_stream in
   
   let last_interpolated = 
-    if List.length points >= 2 then
+    if List.length points >= 2 then  (* Начинаем с 2 точек для линейной интерполяции *)
       perform_interpolation points runner.interpolation_types runner.step runner.last_interpolated_x
     else
-      None
+      runner.last_interpolated_x
   in
   
   let new_point = read_point () in
@@ -77,6 +88,6 @@ let initialize_runner runner =
   let initial_points = read_initial_points required_points Seq.empty in
   update_runner { runner with 
     points_stream = initial_points;
-    last_interpolated_x = None
+    last_interpolated_x = List.map (fun i -> (i.name, None)) runner.interpolation_types
   }
 
