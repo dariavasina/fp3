@@ -20,16 +20,13 @@ let generate_x_values start_x end_x step =
   fun () -> aux start_x
 
 let perform_interpolation points interpolation_types step (last_interpolated : (string * float option) list) : (string * float option) list =
-  (* Сортируем методы по window_size, чтобы линейная интерполяция шла первой *)
   let sorted_types = List.sort (fun a b -> compare a.window_size b.window_size) interpolation_types in
   
   List.map (fun interpolation ->
     let relevant_points = 
       if interpolation.window_size = 2 then
-        (* Для линейной интерполяции берем последние 2 точки *)
         List.rev points |> take 2 |> List.rev
       else
-        (* Для Лагранжа берем window_size точек *)
         take interpolation.window_size points
     in
     if List.length relevant_points >= interpolation.window_size then
@@ -54,13 +51,13 @@ let perform_interpolation points interpolation_types step (last_interpolated : (
         (interpolation.name, match last_x with Some x -> x | None -> None)
     else
       (interpolation.name, None)
-  ) sorted_types  (* Используем отсортированный список *)
+  ) sorted_types 
 
 let rec update_runner runner =
   let points = List.of_seq runner.points_stream in
   
   let last_interpolated = 
-    if List.length points >= 2 then  (* Начинаем с 2 точек для линейной интерполяции *)
+    if List.length points >= 2 then 
       perform_interpolation points runner.interpolation_types runner.step runner.last_interpolated_x
     else
       runner.last_interpolated_x
@@ -80,14 +77,16 @@ let rec update_runner runner =
   }
 
 let initialize_runner runner =
-  let required_points = List.fold_left (fun acc interpolation -> max acc interpolation.window_size) 0 runner.interpolation_types in
+  let min_points = 2 in  (* Начинаем с 2 точек для линейной интерполяции *)
   let rec read_initial_points n acc =
     if n = 0 then acc
-    else read_initial_points (n - 1) (Seq.append acc (Seq.return (read_point ())))
+    else 
+      let new_point = read_point () in
+      let updated_acc = Seq.append acc (Seq.return new_point) in
+      read_initial_points (n - 1) updated_acc
   in
-  let initial_points = read_initial_points required_points Seq.empty in
+  let initial_points = read_initial_points min_points Seq.empty in
   update_runner { runner with 
     points_stream = initial_points;
     last_interpolated_x = List.map (fun i -> (i.name, None)) runner.interpolation_types
   }
-
