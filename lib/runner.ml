@@ -77,7 +77,7 @@ let rec update_runner runner =
   }
 
 let initialize_runner runner =
-  let min_points = 2 in  (* Начинаем с 2 точек для линейной интерполяции *)
+  let min_points = 2 in  
   let rec read_initial_points n acc =
     if n = 0 then acc
     else 
